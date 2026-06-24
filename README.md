@@ -35,7 +35,7 @@ print(dumped_data)
 
 ### 2. Data validation
 
-```
+```python
 from dumper import ValidationEntity
 
 class TargetUser(ValidationEntity):
@@ -57,7 +57,7 @@ print(isinstance(validated_user, TargetUser))  # True
 
 ### 3. Handling Cyclic Graphs
 
-```
+```python
 # Default safe behavior (prevents infinite recursion loops)
 dumped_graph = Dumper.dump(cyclic_node, deep=False)
 ```
