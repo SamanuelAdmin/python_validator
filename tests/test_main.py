@@ -43,9 +43,8 @@ class DynamicCallable:
 
 
 class ValidatedTarget(Validator):
-    def __init__(self, name: str, age: int):
-        self.name = name
-        self.age = age
+    name: str
+    age: str
 
 
 def test_dump_primitives():
@@ -67,8 +66,7 @@ def test_dump_collections_type_saving():
 
 def test_dump_nested_dict():
     """Проверяем честный обход стандартных словарей любой вложенности."""
-    data = {"user": "admin", "meta": {
-        "roles": ["root", "user"], "active": True}}
+    data = {"user": "admin", "meta": {"roles": ["root", "user"], "active": True}}
     assert Dumper.dump(data) == data
 
 
@@ -165,3 +163,48 @@ def test_validation_entity_invalid_attributes():
 
     with pytest.raises(Exception) as exc_info:
         ValidatedTarget.validate(invalid_source)
+
+
+def test_validator_meta_positional_args():
+    """Проверяем, что метакласс корректно собирает объект через позиционные аргументы."""
+    # Передаем строго по порядку: name, затем age
+    instance = ValidatedTarget("Gleb", 29)
+
+    assert instance.name == "Gleb"
+    assert instance.age == 29
+
+
+def test_validator_meta_missing_arguments_raises_type_error():
+    """Проверяем, что если не передать обязательное поле, вылетает TypeError."""
+    # Пропустили поле 'age'
+    with pytest.raises(TypeError) as exc_info:
+        ValidatedTarget(name="Anatoliy")
+
+    assert "missing required arguments: age" in str(exc_info.value)
+
+
+def test_validator_meta_extra_arguments_raises_type_error():
+    """Проверяем, что передача неаннотированного мусора пресекается конструктором."""
+    # Передали 'hobby', которого нет в классе ValidatedTarget
+    with pytest.raises(TypeError) as exc_info:
+        ValidatedTarget(name="Ivan", age=20, hobby="coding")
+
+    assert "got unexpected keyword arguments: hobby" in str(exc_info.value)
+
+
+def test_validator_meta_mixed_args_and_kwargs():
+    """Проверяем совмещенный вариант (часть через args, часть через kwargs)."""
+    # 'Gleb' пойдет в name (первая аннотация), age передаем явно
+    instance = ValidatedTarget("Gleb", age=29)
+
+    assert instance.name == "Gleb"
+    assert instance.age == 29
+
+
+def test_validator_meta_positional_overflow_raises_type_error():
+    """Проверяем, что передача лишних позиционных аргументов валит конструктор."""
+    # Передали 3 аргумента вместо 2 допустимых
+    with pytest.raises(TypeError) as exc_info:
+        ValidatedTarget("Gleb", 29, "ExtraArg")
+
+    assert "positional arguments but more were given" in str(exc_info.value)
